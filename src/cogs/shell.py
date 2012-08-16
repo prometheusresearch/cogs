@@ -358,7 +358,7 @@ class Shell(object):
                     param, default = param
                     T_dict[param] = ArgDsc(default=default)
             if varargs:
-                T_dict[param] = ArgDsc(default=(), plural=True)
+                T_dict[varargs] = ArgDsc(default=(), plural=True)
                 T_dict['_vararg'] = varargs
             T = type(T.__name__, (object,), T_dict)
         elif isinstance(T, types.ClassType):
