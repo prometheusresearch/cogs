@@ -7,9 +7,9 @@
 from setuptools import setup, find_packages
 
 
-NAME = "DDT"
-VERSION = "0.1.1" # FIXME: synchronize with `ddt.__version__`?
-DESCRIPTION = """Development, Deployment and Testing automation toolkit"""
+NAME = "Cogs"
+VERSION = "0.1.1"
+DESCRIPTION = """A toolkit for developing command-line utilities in Python"""
 LONG_DESCRIPTION = open('README', 'r').read()
 AUTHOR = """Kirill Simonov (Prometheus Research, LLC)"""
 LICENSE = "MIT"
@@ -18,9 +18,9 @@ PACKAGE_DIR = {'': 'src'}
 INSTALL_REQUIRES = ['setuptools', 'PyYAML']
 ENTRY_POINTS = {
     'console_scripts': [
-        'ddt = ddt.run:run',
+        'cogs = cogs:run',
     ],
-    'ddt.extensions': [],
+    'cogs.extensions': [],
 }
 
 

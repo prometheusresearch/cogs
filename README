@@ -1,38 +1,38 @@
-*****************************************************************
-  DDT -- Development, Deployment and Testing automation toolkit
-*****************************************************************
+********************************************************************
+  Cogs - A toolkit for developing command-line utilities in Python
+********************************************************************
 
 Overview
 ========
 
-DDT is a toolkit for developing command-line utilities in Python.  It
+Cogs is a toolkit for developing command-line utilities in Python.  It
 handles common operations such as parsing command-line parameters,
 dispatching commands, loading configuration files and is targeted
 to developers, sysadmins, testers, or anybody else who needs to script
 their routine tasks.
 
-DDT is a free software licensed under MIT license.  DDT is written by
+Cogs is a free software licensed under MIT license.  Cogs is written by
 Kirill Simonov from Prometheus Research, LLC.
 
 
 Getting Started
 ===============
 
-You can install DDT using `PIP package manager`_::
+You can install Cogs using `PIP package manager`_::
 
-    # pip install DDT
+    # pip install Cogs
 
 .. _PIP package manager: http://www.pip-installer.org/
 
-This operation installs a command-line utility ``ddt`` and a Python
-package of the same name.  The ``ddt`` utility is a dispatcher which
+This operation installs a command-line utility ``cogs`` and a Python
+package of the same name.  The ``cogs`` utility is a dispatcher which
 which lets you select and execute your scripts (called *tasks*).  Let us
 show how to do it with a simple example.
 
-In the current directory, make a subdirectory ``ddt.local`` and create a
+In the current directory, make a subdirectory ``cogs.local`` and create a
 file ``__init__.py`` with the following content::
 
-    from ddt import task, log
+    from cogs import task, log
     import os
 
     @task
@@ -44,53 +44,53 @@ file ``__init__.py`` with the following content::
 
 Now run::
 
-    $ ddt hello world
+    $ cogs hello world
     Hello, World!
 
-    $ ddt hello
+    $ cogs hello
     Hello, Xi!
 
-    $ ddt help hello
+    $ cogs help hello
     HELLO - greet the given entity (if not specified, the current user)
-    Usage: ddt hello [<name>]
+    Usage: cogs hello [<name>]
 
-DDT converts function ``Hello()`` into a command-line script with
+Cogs converts function ``Hello()`` into a command-line script with
 parameters inferred from the function signature, so then when you
-execute a command ``ddt hello world``, you call a function
+execute a command ``cogs hello world``, you call a function
 ``Hello('world')``.
 
 
 Loading Extensions
 ==================
 
-In this section, we describe how DDT finds and loads extensions.
+In this section, we describe how Cogs finds and loads extensions.
 
-DDT loads extensions from two places:
+Cogs loads extensions from two places:
 
-* ``ddt.local`` subdirectory in the current directory;
-* all Python packages under ``ddt.extensions`` entry point.
+* ``cogs.local`` subdirectory in the current directory;
+* all Python packages under ``cogs.extensions`` entry point.
 
-The easiest way to add an extension is to create a ``ddt.local``
+The easiest way to add an extension is to create a ``cogs.local``
 subdirectory and add your scripts there.  The subdirectory must contain
-an ``__init__.py`` script, which is executed by DDT on startup.  The
-``ddt.local`` subdirectory must be owned by the same user who runs the
-``ddt`` script, or by ``root``; otherwise it is ignored.
+an ``__init__.py`` script, which is executed by Cogs on startup.  The
+``cogs.local`` subdirectory must be owned by the same user who runs the
+``cogs`` script, or by ``root``; otherwise it is ignored.
 
-If you need to package and distribute your DDT extensions, using
-``ddt.local`` may be inconvenient.  In this case, you may package your
-DDT extensions as a regular Python distribution.
+If you need to package and distribute your Cogs extensions, using
+``cogs.local`` may be inconvenient.  In this case, you may package your
+Cogs extensions as a regular Python distribution.
 
 Suppose we want to pack the ``hello`` task as a separate package.
 Create a directory tree with the following structure::
 
-    DDT-Hello/
+    Cogs-Hello/
         src/
-            ddt_hello/
+            cogs_hello/
                 __init__.py
         setup.py
 
-The file ``ddt_hello/__init__.py`` contains the definition of the
-``hello`` task and has the same content as ``ddt.local/__init__.py`` in
+The file ``cogs_hello/__init__.py`` contains the definition of the
+``hello`` task and has the same content as ``cogs.local/__init__.py`` in
 our previous example.
 
 The file ``setup.py`` contains the meta-data of the package and may have
@@ -99,19 +99,19 @@ the following content::
     from setuptools import setup
 
     setup(
-        name='DDT-Hello',
+        name='Cogs-Hello',
         version='0.0.1',
-        description="""A DDT task to greet somebody""",
-        packages=['ddt_hello'],
+        description="""A Cogs task to greet somebody""",
+        packages=['cogs_hello'],
         package_dir={'': 'src'},
-        install_requires=['DDT'],
-        entry_points={ 'ddt.extensions': ['Hello = ddt_hello'] },
+        install_requires=['Cogs'],
+        entry_points={ 'cogs.extensions': ['Hello = cogs_hello'] },
     )
 
 Note the parameter ``entry_points`` in ``setup()`` invocation; it adds
-an entry point ``ddt.extensions`` named ``Hello`` that refers to package
-``ddt_hello``.  On startup, DDT finds and loads all packages defined for
-the entry point ``ddt.extensions``.
+an entry point ``cogs.extensions`` named ``Hello`` that refers to package
+``cogs_hello``.  On startup, Cogs finds and loads all packages defined for
+the entry point ``cogs.extensions``.
 
 
 Defining Tasks
@@ -120,7 +120,7 @@ Defining Tasks
 A task can be created from a function or a class by augmenting it with
 the ``task`` decorator::
 
-    from ddt import task, argument, log, fail
+    from cogs import task, argument, log, fail
 
     @task
     def Factorial(n):
@@ -169,27 +169,27 @@ the ``task`` decorator::
 
 You can now execute the tasks by running::
 
-    $ ddt factorial 10
+    $ cogs factorial 10
     10! = 3628800
 
-    $ ddt fibonacci 10
+    $ cogs fibonacci 10
     F_10 = 55
 
-DDT uses the name of the function or the class as the task identifier.
+Cogs uses the name of the function or the class as the task identifier.
 The name is normalized: it is converted to lower case and has all
 underscore characters converted to the dash symbol.
 
 If the task is derived from a function, the task arguments are inferred
-from the function signature.  DDT executes such a task by calling the
+from the function signature.  Cogs executes such a task by calling the
 function with the parsed command-line parameters.
 
 If the task is derived from a class, the task arguments and options must
 be defined using ``argument()`` and ``option()`` descriptors.  To
-execute a task, DDT creates an instance of the class passing the task
-parameters as the constructor arguments.  Then DDT invokes the
+execute a task, Cogs creates an instance of the class passing the task
+parameters as the constructor arguments.  Then Cogs invokes the
 ``__call__`` method of the instance.  Thus the call of::
 
-    $ ddt factorial 10
+    $ cogs factorial 10
 
 is translated to::
 
@@ -197,7 +197,7 @@ is translated to::
 
 and the call of::
 
-    $ ddt fibonacci 10
+    $ cogs fibonacci 10
 
 is translated to::
 
@@ -207,9 +207,9 @@ is translated to::
 The docstring of the function or the class becomes the task
 description::
 
-    $ ddt help factorial
+    $ cogs help factorial
     FACTORIAL - calculate n!
-    Usage: ddt factorial <n>
+    Usage: cogs factorial <n>
 
     This task calculates the value of the factorial of the given
     positive number n.  Factorial of n, also known as n!, is
@@ -217,8 +217,8 @@ description::
 
         n! = 1*2*...*(n-1)*n
 
-    $ ddt help fibonacci
-    Usage: ddt fibonacci <n>
+    $ cogs help fibonacci
+    Usage: cogs fibonacci <n>
 
     The n-th Fibonacci number F_n is defined by:
 
@@ -230,7 +230,7 @@ A task derived from a function cannot have options.  To add an option to
 a task derived from a class, use the ``option()`` descriptor.  For
 example::
 
-    from ddt import task, argument, option
+    from cogs import task, argument, option
     import sys, os
 
     @task
@@ -255,15 +255,15 @@ example::
 You can execute this task with option ``--output`` or ``-o`` to redirect
 the output to a file::
 
-    $ ddt write-hello world -o hello.txt
+    $ cogs write-hello world -o hello.txt
 
 
 Configuration and Environment
 =============================
 
-DDT allows you to define custom configuration parameters.  For example::
+Cogs allows you to define custom configuration parameters.  For example::
 
-    from ddt import env, task, setting, log
+    from cogs import env, task, setting, log
     import os
 
     @setting
@@ -285,31 +285,31 @@ Now you could specify the name as a configuration parameter
 ``default-name``.  One way to do it is to use global option
 ``--default-name``::
 
-    $ ddt --default-name=world hello-with-configuration
+    $ cogs --default-name=world hello-with-configuration
 
 You could also pass a configuration parameter using an environment
 variable::
 
-    $ DDT_DEFAULT_NAME=world ddt hello-with-configuration
+    $ COGS_DEFAULT_NAME=world cogs hello-with-configuration
 
 Alternatively, you can put parameters to a configuration file.  In the
-current directory, create a file ``ddt.conf`` with the following
+current directory, create a file ``cogs.conf`` with the following
 content::
 
     default-name: world
 
 Now run::
 
-    $ ddt hello-with-configuration
+    $ cogs hello-with-configuration
 
-DDT reads configuration from the following locations:
+Cogs reads configuration from the following locations:
 
-* ``/etc/ddt.conf``
-* ``$PREFIX/etc/ddt.conf``
-* ``$HOME/.ddt.conf``
-* ``./ddt.conf``
+* ``/etc/cogs.conf``
+* ``$PREFIX/etc/cogs.conf``
+* ``$HOME/.cogs/cogs.conf``
+* ``./cogs.conf``
 * program environment
-* command-line options
+* command-line parameters
 
 To create a new configuration parameter, wrap a function named after the
 parameter with the ``@setting`` decorator.  The function must accept
@@ -317,7 +317,7 @@ zero or one argument: the function is called without arguments if the
 parameter is not specified explicitly, and is called with the value of
 the parameter is it was set using one of the methods described above.
 
-DDT does not impose any rules on what to do with the parameter value,
+Cogs does not impose any rules on what to do with the parameter value,
 but we recommend to store the value in the global ``env`` variable.  The
 call of ``env.add(default_name=name)`` adds a new parameter
 ``default_name`` which could then be accessed as ``env.default_name``.
@@ -326,7 +326,7 @@ call of ``env.add(default_name=name)`` adds a new parameter
 API Reference
 =============
 
-The following functions and classes are defined in the package ``ddt``:
+The following functions and classes are defined in the package ``cogs``:
 
 ``@task``
 
@@ -385,7 +385,7 @@ The following functions and classes are defined in the package ``ddt``:
     value of the setting.  The function is responsible for storing the
     value in the ``env`` object.
 
-``argument(check=None, default=None, is_optional=False, is_list=False)``
+``argument(check, default, plural=False)``
 
     Describe a task argument.
 
@@ -396,18 +396,14 @@ The following functions and classes are defined in the package ``ddt``:
 
     ``default``
         The default value to be used if the argument is optional and not
-        specified.
+        specified.  If this parameter is not set, the argument is mandatory.
 
-    ``is_optional``
-        If set, the argument can be omitted.  An optional argument must
-        not appear before any mandatory argument.
-
-    ``is_list``
+    ``plural``
         If set, the argument consumes all the remaining command-line
         parameters.  Must be the last argument specified.
 
 
-``option(key=None, check=None, default=None, has_value=False, value_name=None, hint=None)``
+``option(key, check, default, plural=False, value_name=None, hint=None)``
 
     Describe a task option.
 
@@ -420,12 +416,13 @@ The following functions and classes are defined in the package ``ddt``:
         exception on error.
 
     ``default``
-        The default value used when the option is not specified.
+        The default value used when the option is not specified.  If this
+        parameter is not set, the option does not accept a value.  Such an
+        option is treated is a toggle and takes a value ``True`` if set
+        and ``False`` if not set.
 
-    ``has_value``
-        If set, the option takes a value.  If not set, the option is a
-        toggle with the value of ``False`` if the option is not
-        specified; ``True`` otherwise.
+    ``plural``
+        If set, indicates that the option could be specified more than once.
 
     ``value_name``
         The preferred name for the option value; used for the task
@@ -481,7 +478,7 @@ The following functions and classes are defined in the package ``ddt``:
     other system state with a respective ``debug()`` call.
 
     Add command-line parameter ``--debug`` or set environment variable
-    ``DDT_DEBUG=1`` to see debug output.
+    ``COGS_DEBUG=1`` to see debug output.
 
 ``warn(*msgs, sep=' ', end='\n', file=sys.stderr)``
     Display a warning.  ``warn()`` should be used for reporting error
