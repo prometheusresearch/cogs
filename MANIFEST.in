@@ -4,6 +4,10 @@
 #
 
 
-__import__('pkg_resources').declare_namespace(__name__)
+# README files.
+include README LICENSE
+
+# Include demo files.
+recursive-include demo *.py Makefile
 
 

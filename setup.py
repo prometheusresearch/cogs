@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2012, Prometheus Research, LLC
+# Copyright (c) 2013, Prometheus Research, LLC
 # Released under MIT license, see `LICENSE` for details.
 #
 
@@ -8,8 +8,8 @@ from setuptools import setup, find_packages
 
 
 NAME = "Cogs"
-VERSION = "0.1.2"
-DESCRIPTION = """A toolkit for developing command-line utilities in Python"""
+VERSION = "0.1.3"
+DESCRIPTION = """Toolkit for developing command-line utilities in Python"""
 LONG_DESCRIPTION = open('README', 'r').read()
 AUTHOR = """Kirill Simonov (Prometheus Research, LLC)"""
 AUTHOR_EMAIL = "xi@resolvent.net"
@@ -29,7 +29,7 @@ PACKAGE_DIR = {'': 'src'}
 INSTALL_REQUIRES = ['setuptools', 'PyYAML']
 ENTRY_POINTS = {
     'console_scripts': [
-        'cogs = cogs:run',
+        'cogs = cogs.run:main',
     ],
     'cogs.extensions': [],
 }

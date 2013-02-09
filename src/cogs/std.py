@@ -1,180 +1,217 @@
 #
-# Copyright (c) 2012, Prometheus Research, LLC
+# Copyright (c) 2013, Prometheus Research, LLC
 # Released under MIT license, see `LICENSE` for details.
 #
 
 
-from .logutils import LogUtils
-from .shell import ArgDsc
-import os.path
+from .core import env, task, default_task, setting, argument, option
+from .log import log, fail
 import sys
+import os.path
 
 
-def register_std(shell):
-    log_utils = LogUtils(shell)
-    log = log_utils.log
-    fail = log_utils.fail
+@default_task
+class Usage(object):
+    """run when no task is supplied"""
+
+    help = option()
+    #version = option()
+    #license = option()
+
+    def __init__(self, help=False):
+        self.help = help
+
+    def __call__(self):
+        if self.help:
+            t = Help(None)
+            return t()
+        if env.shell.description:
+            log("{} - {}", env.shell.name, env.shell.description)
+        else:
+            log("{}", env.shell.name)
+        executable = os.path.basename(sys.argv[0])
+        log("Usage: `{} [<settings>...] <task> [<arguments>...]`", executable)
+        log()
+        log("Run `{} help` for general usage and a list of tasks and settings.",
+            executable)
+        log("Run `{} help <topic>` for help on a specific task or setting.",
+            executable)
 
 
-    @shell.register_default_task
-    class Usage(object):
-        """explain how to obtain help on DDT"""
+@task
+class Help(object):
+    """display help on tasks and settings
 
-        # FIXME: implement common options: `--help`, `--version`, `--license`
-        #help = option()
-        #version = option()
-        #license = option()
+    When started without arguments, displays a list of available tasks,
+    settings and toggles.
 
-        def __init__(self, help=False, version=False, license=False):
-            self.help = help
-            self.version = version
-            self.license = license
+    When `<topic>` is given, describes the usage of the specified task
+    or setting.
+    """
 
-        def __call__(self):
-            #if self.help:
-            #    t = Help()
-            #    return t()
-            #if self.version:
-            #    t = Version()
-            #    return t()
-            #if self.license:
-            #    t = License()
-            #    return t()
-            if shell.description:
-                log("%s - %s" % (shell.name, shell.description))
-            else:
-                log(shell.name)
-            executable = os.path.basename(sys.argv[0])
-            log("Usage: %s [<settings>...] <task> [<arguments>...]"
-                % executable)
-            log()
-            log("Run `%s help` for general usage and a list of tasks"
-                " and settings." % executable)
-            log("Run `%s help <task>` for help on a specific task."
-                % executable)
+    topic = argument(default=None)
 
+    def __init__(self, topic):
+        self.topic = topic
 
-    @shell.register_task
-    class Help(object):
-        """display help on tasks and options
+    def __call__(self):
+        if self.topic is None:
+            return self.describe_all()
+        if self.topic in env.task_map:
+            spec = env.task_map[self.topic]
+            return self.describe_task(spec)
+        elif self.topic in env.setting_map:
+            spec = env.setting_map[self.topic]
+            return self.describe_setting(spec)
+        elif self.topic in env.topic_map:
+            spec = env.topic_map[self.topic]
+            return self.describe_topic(spec)
+        else:
+            raise fail("unknown help topic `{}`", self.topic)
 
-        When started without arguments, displays a list of available tasks,
-        options and toggles.
-
-        When `<name>` is given, describes the usage of the specified task
-        or option.
-        """
-
-        name = ArgDsc(default=None)
-
-        def __init__(self, name):
-            self.name = name
-
-        def __call__(self):
-            if self.name is None:
-                return self.describe_all()
-            if self.name in shell.task_by_name:
-                task = shell.task_by_name[self.name]
-                return self.describe_task(task)
-            elif self.name in shell.setting_by_name:
-                setting = shell.setting_by_name[self.name]
-                return self.describe_setting(setting)
-            else:
-                raise fail("unknown task or setting `%s`" % self.name)
-
-        def describe_all(self):
-            if shell.description:
-                log("%s - %s" % (shell.name, shell.description))
-            else:
-                log(shell.name)
-            executable = os.path.basename(sys.argv[0])
-            log("Usage: %s [<settings>...] <task> [<arguments>...]"
-                % executable)
-            log()
-            log("Run `%s help` for general usage and a list of tasks"
-                " and settings." % executable)
-            log("Run `%s help <task>` for help on a specific task."
-                % executable)
-            log()
+    def describe_all(self):
+        if env.shell.description:
+            log("{} - {}", env.shell.name, env.shell.description)
+        else:
+            log("{}", env.shell.name)
+        executable = os.path.basename(sys.argv[0])
+        log("Usage: `{} [<settings>...] <task> [<arguments>...]`", executable)
+        log()
+        log("Run `{} help` for general usage and a list of tasks,", executable)
+        log("settings and other help topics.")
+        log()
+        log("Run `{} help <topic>` for help on a specific topic.", executable)
+        log()
+        if env.task_map:
             log("Available tasks:")
-            for name in sorted(shell.task_by_name):
+            for name in sorted(env.task_map):
                 if not name:
                     continue
-                task = shell.task_by_name[name]
-                usage = task.usage
-                hint = task.hint
-                if hint:
-                    log("  %-24s : %s" % (usage, hint))
-                else:
-                    log("  %s" % usage)
-            log()
-            log("Settings:")
-            for name in sorted(shell.setting_by_name):
-                setting = shell.setting_by_name[name]
-                usage = setting.usage
-                hint = setting.hint
-                if hint:
-                    log("  %-24s : %s" % (usage, hint))
-                else:
-                    log("  %s" % usage)
-            log()
-
-        def describe_task(self, task):
-            name = task.name
-            hint = task.hint
-            if hint:
-                log("%s - %s" % (name.upper(), hint))
-            else:
-                log(name.upper())
-            usage = task.usage
-            executable = os.path.basename(sys.argv[0])
-            log("Usage: `%s %s`" % (executable, usage))
-            log()
-            help = task.help
-            if help:
-                log(help)
-                log()
-            if task.opts:
-                log("Options:")
-                for opt in task.opts:
-                    usage = opt.usage
-                    hint = opt.hint
-                    if hint:
-                        log("  %-24s : %s" % (usage, hint))
+                spec = env.task_map[name]
+                usage = spec.name
+                optionals = 0
+                for arg in spec.args:
+                    if arg.is_optional:
+                        usage = "%s [<%s>" % (usage, arg.name)
+                        optionals += 1
                     else:
-                        log("  %s" % usage)
-
-        def describe_setting(self, setting):
-            name = setting.name
-            hint = setting.hint
-            if hint:
-                log("%s - %s" % (name.upper(), hint))
-            else:
-                log(name.upper())
-            executable = os.path.basename(sys.argv[0])
-            usage = setting.usage
-            usage_conf = setting.usage_conf
-            usage_environ = setting.usage_environ
-            log("Usage: `%s %s`" % (executable, usage))
-            if shell.config_name:
-                log("       `%s` (%s)" % (usage_conf, shell.config_name))
-            log("       `%s` (environment)" % usage_environ)
+                        usage = "%s <%s>" % (usage, arg.name)
+                    if arg.is_plural:
+                        usage += "..."
+                if optionals:
+                    usage += "]"*optionals
+                if spec.hint:
+                    log("  {:<24} : {}", usage, spec.hint)
+                else:
+                    log("  {}", usage)
             log()
-            help = setting.help
-            if help:
-                log(help)
+        if env.setting_map:
+            log("Settings:")
+            for name in sorted(env.setting_map):
+                spec = env.setting_map[name]
+                if spec.has_value:
+                    usage = "--%s=%s" % (spec.name, spec.value_name.upper())
+                else:
+                    usage = "--%s" % spec.name
+                if spec.hint:
+                    log("  {:<24} : {}", usage, spec.hint)
+                else:
+                    log("  {}", usage)
+            log()
+        if env.topic_map:
+            log("Other topics:")
+            for name in sorted(env.topic_map):
+                spec = env.topic_map[name]
+                if spec.hint:
+                    log("  {:<24} : {}", spec.name, spec.hint)
+                else:
+                    log("  {}", spec.name)
                 log()
 
+    def describe_task(self, spec):
+        if spec.hint:
+            log("{} - {}", spec.name.upper(), spec.hint)
+        else:
+            log("{}", spec.name.upper())
+        usage = spec.name
+        optionals = 0
+        for arg in spec.args:
+            if arg.is_optional:
+                usage = "%s [<%s>" % (usage, arg.name)
+                optionals += 1
+            else:
+                usage = "%s <%s>" % (usage, arg.name)
+            if arg.is_plural:
+                usage += "..."
+        if optionals:
+            usage += "]"*optionals
+        executable = os.path.basename(sys.argv[0])
+        log("Usage: `{} {}`", executable, usage)
+        log()
+        if spec.help:
+            log(spec.help)
+            log()
+        if spec.opts:
+            log("Options:")
+            for opt in spec.opts:
+                usage = "--%s" % opt.name
+                if opt.key is not None:
+                    usage = "-%s/%s" % (opt.key, usage)
+                if opt.has_value:
+                    usage = "%s=%s" % (usage, opt.value_name)
+                if spec.hint:
+                    log("  {:<24} : {}", usage, spec.hint)
+                else:
+                    log("  {}", spec.name)
+            log()
 
-    @shell.register_setting
-    def Debug(value=False):
-        """print debug information"""
-        if value is None or value in ['false', '', '0', 0]:
-            value = False
-        if value in ['true', '1', 1]:
-            value = True
-        if not isinstance(value, bool):
-            raise ValueError("debug: expected a Boolean value; got %r" % value)
-        shell.environment.set(debug=value)
+    def describe_setting(self, spec):
+        if spec.hint:
+            log("{} - {}", spec.name.upper(), spec.hint)
+        else:
+            log("{}", spec.name.upper())
+        executable = os.path.basename(sys.argv[0])
+        usage = "--%s" % spec.name
+        usage_conf = "%s" % spec.name
+        usage_environ = ("%s_%s" % (env.shell.name, spec.name)) \
+                        .upper().replace('-', '_')
+        if spec.has_value:
+            usage += "=%s" % spec.value_name
+            usage_conf += ": %s" % spec.value_name
+            usage_environ += "=%s" % spec.value_name
+        else:
+            usage_conf += ": true"
+            usage_environ += "=1"
+        log("Usage: `{} {}`", executable, usage)
+        if env.shell.config_name:
+            log("       `{}` ({})", usage_conf, env.shell.config_name)
+        log("       `{}` (environment)", usage_environ)
+        log()
+        if spec.help:
+            log(spec.help)
+            log()
+
+    def describe_topic(self, spec):
+        if spec.hint:
+            log("{} - {}", spec.name.upper(), spec.hint)
+        else:
+            log("{}", spec.name.upper())
+        log()
+        if spec.help:
+            log(spec.help)
+            log()
+        spec.code()
+
+
+@setting
+def Debug(value=False):
+    """print debug information"""
+    if value is None or value in ['false', '', '0', 0]:
+        value = False
+    if value in ['true', '1', 1]:
+        value = True
+    if not isinstance(value, bool):
+        raise ValueError("debug: expected a Boolean value; got %r" % value)
+    env.set(debug=value)
 
 

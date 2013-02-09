@@ -1,15 +1,15 @@
-********************************************************************
-  Cogs - A toolkit for developing command-line utilities in Python
-********************************************************************
+******************************************************************
+  Cogs - Toolkit for developing command-line utilities in Python
+******************************************************************
 
 Overview
 ========
 
 Cogs is a toolkit for developing command-line utilities in Python.  It
 handles common operations such as parsing command-line parameters,
-dispatching commands, loading configuration files and is targeted
-to developers, sysadmins, testers, or anybody else who needs to script
-their routine tasks.
+dispatching commands and loading configuration files. It is targeted to
+developers, sysadmins, testers, or anyone who needs to script their
+routine tasks.
 
 Cogs is a free software licensed under MIT license.  Cogs is written by
 Kirill Simonov from Prometheus Research, LLC.
@@ -29,18 +29,18 @@ package of the same name.  The ``cogs`` utility is a dispatcher which
 which lets you select and execute your scripts (called *tasks*).  Let us
 show how to do it with a simple example.
 
-In the current directory, make a subdirectory ``cogs.local`` and create a
-file ``__init__.py`` with the following content::
+In the current directory, create a file ``cogs.local.py`` with the
+following content::
 
-    from cogs import task, log
+    from cogs import task
     import os
 
     @task
     def Hello(name=None):
-        """greet the given entity (if not specified, the current user)"""
+        """greet someone (if not specified, the current user)"""
         if name is None:
             name = os.getlogin()
-        log("Hello, %s!" % name.capitalize())
+        print "Hello, %s!" % name.capitalize()
 
 Now run::
 
@@ -51,12 +51,12 @@ Now run::
     Hello, Xi!
 
     $ cogs help hello
-    HELLO - greet the given entity (if not specified, the current user)
+    HELLO - greet someone (if not specified, the current user)
     Usage: cogs hello [<name>]
 
 Cogs converts function ``Hello()`` into a command-line script with
 parameters inferred from the function signature, so then when you
-execute a command ``cogs hello world``, you call a function
+execute a command ``cogs hello world``, you invoke a function
 ``Hello('world')``.
 
 
@@ -67,14 +67,17 @@ In this section, we describe how Cogs finds and loads extensions.
 
 Cogs loads extensions from two places:
 
-* ``cogs.local`` subdirectory in the current directory;
+* ``cogs.local.py`` or ``cogs.local/__init__.py`` module in the current
+  directory;
 * all Python packages under ``cogs.extensions`` entry point.
 
-The easiest way to add an extension is to create a ``cogs.local``
-subdirectory and add your scripts there.  The subdirectory must contain
-an ``__init__.py`` script, which is executed by Cogs on startup.  The
-``cogs.local`` subdirectory must be owned by the same user who runs the
-``cogs`` script, or by ``root``; otherwise it is ignored.
+The easiest way to add an extension is to create a ``cogs.local.py``
+module and add your tasks there.  If you want to split the module into
+multiple files, create a ``cogs.local`` subdirectory with an
+``__init__.py`` module.  ``cogs.local.py`` or ``cogs.local/__init__.py``
+are executed by Cogs on startup.  The modules must be owned by the same
+user who runs the ``cogs`` script, or by ``root``; otherwise they are
+ignored.
 
 If you need to package and distribute your Cogs extensions, using
 ``cogs.local`` may be inconvenient.  In this case, you may package your
@@ -85,33 +88,38 @@ Create a directory tree with the following structure::
 
     Cogs-Hello/
         src/
-            cogs_hello/
+            cogs/
                 __init__.py
+                hello.py
         setup.py
 
-The file ``cogs_hello/__init__.py`` contains the definition of the
-``hello`` task and has the same content as ``cogs.local/__init__.py`` in
-our previous example.
+The file ``cogs/hello.py`` contains the definition of the ``hello`` task
+and has the same content as ``cogs.local.py`` in our previous example.
 
-The file ``setup.py`` contains the meta-data of the package and may have
-the following content::
+The file ``cogs/__init__.py`` contains just one line::
+
+    __import__('pkg_resources').declare_namespace(__name__)
+
+The file ``setup.py`` contains the meta-data of the package and may
+look like this::
 
     from setuptools import setup
 
     setup(
         name='Cogs-Hello',
-        version='0.0.1',
+        version='0.1',
         description="""A Cogs task to greet somebody""",
-        packages=['cogs_hello'],
+        packages=['cogs'],
+        namespace_packages=['cogs'],
         package_dir={'': 'src'},
         install_requires=['Cogs'],
-        entry_points={ 'cogs.extensions': ['Hello = cogs_hello'] },
+        entry_points={ 'cogs.extensions': ['Hello = cogs.hello'] },
     )
 
 Note the parameter ``entry_points`` in ``setup()`` invocation; it adds
-an entry point ``cogs.extensions`` named ``Hello`` that refers to package
-``cogs_hello``.  On startup, Cogs finds and loads all packages defined for
-the entry point ``cogs.extensions``.
+an entry point ``cogs.extensions`` named ``Hello`` that refers to module
+``cogs.hello``.  On startup, Cogs finds and loads all packages defined
+for the entry point ``cogs.extensions``.
 
 
 Defining Tasks
@@ -120,7 +128,8 @@ Defining Tasks
 A task can be created from a function or a class by augmenting it with
 the ``task`` decorator::
 
-    from cogs import task, argument, log, fail
+    from cogs import task, argument
+    from cogs.log import log, fail
 
     @task
     def Factorial(n):
@@ -141,7 +150,7 @@ the ``task`` decorator::
         f = 1
         for k in range(2, n+1):
             f *= k
-        log("%s! = `%s`" % (n, f))
+        log("{}! = `{}`", n, f)
 
     @task
     class Fibonacci:
@@ -165,7 +174,7 @@ the ``task`` decorator::
             p, q = 0, 1
             for k in range(self.n):
                 p, q = p+q, p
-            log("F_%s = `%s`" % (self.n, p))
+            log("F_{} = `{}`", self.n, p)
 
 You can now execute the tasks by running::
 
@@ -180,7 +189,7 @@ The name is normalized: it is converted to lower case and has all
 underscore characters converted to the dash symbol.
 
 If the task is derived from a function, the task arguments are inferred
-from the function signature.  Cogs executes such a task by calling the
+from the function signature.  Cogs executes such task by calling the
 function with the parsed command-line parameters.
 
 If the task is derived from a class, the task arguments and options must
@@ -249,8 +258,7 @@ example::
                 self.file = open(output, 'w')
 
         def __call__(self):
-            log("Hello, %s!" % self.name.capitalize(),
-                file=self.file)
+            self.file.write("Hello, %s!\n" % self.name.capitalize())
 
 You can execute this task with option ``--output`` or ``-o`` to redirect
 the output to a file::
@@ -263,7 +271,7 @@ Configuration and Environment
 
 Cogs allows you to define custom configuration parameters.  For example::
 
-    from cogs import env, task, setting, log
+    from cogs import env, task, setting
     import os
 
     @setting
@@ -279,7 +287,7 @@ Cogs allows you to define custom configuration parameters.  For example::
     def Hello_With_Configuration(name=None):
         if name is None:
             name = env.default_name
-        log("Hello, %s!" % name.capitalize())
+        print "Hello, %s!" % name.capitalize()
 
 Now you could specify the name as a configuration parameter
 ``default-name``.  One way to do it is to use global option
@@ -326,7 +334,11 @@ call of ``env.add(default_name=name)`` adds a new parameter
 API Reference
 =============
 
-The following functions and classes are defined in the package ``cogs``:
+``cogs.core``
+-------------
+
+Classes and functions defined in ``cogs.core`` are also importable from
+the ``cogs`` package.
 
 ``@task``
 
@@ -387,7 +399,7 @@ The following functions and classes are defined in the package ``cogs``:
 
 ``argument(check, default, plural=False)``
 
-    Describe a task argument.
+    Describes a task argument.
 
     ``check``
         A function which is called to check and/or transform the
@@ -396,33 +408,34 @@ The following functions and classes are defined in the package ``cogs``:
 
     ``default``
         The default value to be used if the argument is optional and not
-        specified.  If this parameter is not set, the argument is mandatory.
+        specified.  If this parameter is not set, the argument is
+        mandatory.
 
     ``plural``
         If set, the argument consumes all the remaining command-line
         parameters.  Must be the last argument specified.
 
-
 ``option(key, check, default, plural=False, value_name=None, hint=None)``
 
-    Describe a task option.
+    Describes a task option.
 
     ``key``
         A one-character shorthand.
 
     ``check``
-        A function called to check and transform the value of the option.
-        The function must return the transformed value or raise ``ValueError``
-        exception on error.
+        A function called to check and transform the value of the
+        option.  The function must return the transformed value or raise
+        ``ValueError`` exception on error.
 
     ``default``
-        The default value used when the option is not specified.  If this
-        parameter is not set, the option does not accept a value.  Such an
-        option is treated is a toggle and takes a value ``True`` if set
-        and ``False`` if not set.
+        The default value used when the option is not specified.  If
+        this parameter is not set, the option does not accept a value.
+        Such an option is treated is a toggle and takes a value ``True``
+        if set and ``False`` if not set.
 
     ``plural``
-        If set, indicates that the option could be specified more than once.
+        If set, indicates that the option could be specified more than
+        once.
 
     ``value_name``
         The preferred name for the option value; used for the task
@@ -444,7 +457,8 @@ The following functions and classes are defined in the package ``cogs``:
         Set values for existing parameters.
 
     ``env.push(**keywords)``
-        Save the current state and set new values for existing parameters.
+        Save the current state and set new values for existing
+        parameters.
 
     ``env.pop()``
         Restore a previously saved state of parameters and values.
@@ -454,13 +468,18 @@ The following functions and classes are defined in the package ``cogs``:
         the current state and sets new parameter values.  On exiting,
         restores the saved state.
 
-``log(*msgs, sep=' ', end='\n', file=sys.stdout)``
-    Print the data to the standard output.
+``cogs.log``
+------------
 
-    ``log()`` has the interface and behavior similar to the standard
-    ``print()`` function.
+Printing utilities.
 
-    ``log()`` supports styling: a substring of the form::
+``log(msg="", *args, **kwds)``
+    Print the message to the standard output.
+
+    If extra positional or keyword arguments are given, they are
+    formatted with ``format()`` function using ``msg`` as the template.
+
+    ``log()`` supports output coloring: a substring of the form::
 
         `...`
 
@@ -469,26 +488,31 @@ The following functions and classes are defined in the package ``cogs``:
         :fmt:`...`
 
     is colorized when displayed on a color terminal.  The supported
-    formats are: *default* (white), ``footnote`` (dark grey),
+    formats are: *default* (white), ``debug`` (dark grey),
     ``warning`` (red), ``success`` (green).
 
-``debug(*msgs, sep=' ', end='\n', file=sys.stderr)``
-    Print the data when the ``env.debug`` parameter is set.  We
+``debug(msg, *args, **kwds)``
+    Print the message when the ``env.debug`` parameter is set.  We
     recommend to accompany any permanent change to the filesystem or
     other system state with a respective ``debug()`` call.
 
     Add command-line parameter ``--debug`` or set environment variable
     ``COGS_DEBUG=1`` to see debug output.
 
-``warn(*msgs, sep=' ', end='\n', file=sys.stderr)``
+``warn(msg, *args, **kwds)``
     Display a warning.  ``warn()`` should be used for reporting error
     conditions which do not prevent the script from continuing the job.
 
-``fail(*msgs, sep=' ', end='\n', file=sys.stderr)``
+``fail(msg, *args, **kwds)``
     Display an error message and return an exception object.  It should
     be used in the following manner::
 
         raise fail("no more beer in the refrigerator")
+
+``cogs.sys``
+------------
+
+File and system utilities.
 
 ``cp(src, dst)``
     Copy a file or a directory tree.
@@ -502,7 +526,7 @@ The following functions and classes are defined in the package ``cogs``:
 ``mktree(path)``
     Create all directories in the path.
 
-``rmtree()``
+``rmtree(path)``
     Remove a directory tree.
 
 ``exe(cmd)``
