@@ -341,7 +341,6 @@ Classes and functions defined in ``cogs.core`` are also importable from
 the ``cogs`` package.
 
 ``@task``
-
     The ``@task`` decorator converts the wrapped function or class into
     a task.  Task properties are inferred from the wrapped object as
     follows:
@@ -380,7 +379,6 @@ the ``cogs`` package.
       method is called on the instance.
 
 ``@setting``
-
     The ``@setting`` decorator converts the wrapped function to a
     configuration parameter, which properties are inferred from the
     function attributes.
@@ -398,7 +396,6 @@ the ``cogs`` package.
     value in the ``env`` object.
 
 ``argument(check, default, plural=False)``
-
     Describes a task argument.
 
     ``check``
@@ -416,7 +413,6 @@ the ``cogs`` package.
         parameters.  Must be the last argument specified.
 
 ``option(key, check, default, plural=False, value_name=None, hint=None)``
-
     Describes a task option.
 
     ``key``
@@ -446,7 +442,6 @@ the ``cogs`` package.
         description.
 
 ``env``
-
     A global object that keeps values of configuration parameters and
     other properties.
 
