@@ -509,8 +509,8 @@ Printing utilities.
 
         raise fail("no more beer in the refrigerator")
 
-``cogs.sys``
-------------
+``cogs.fs``
+-----------
 
 File and system utilities.
 
