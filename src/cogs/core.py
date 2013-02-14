@@ -244,7 +244,7 @@ def task(T, is_default=False):
     # Extract the name and description.
     name = _to_name(norm_T.__name__)
     if is_default:
-        name = None
+        name = ''
     hint, help = _describe(norm_T)
 
     # Register the task.

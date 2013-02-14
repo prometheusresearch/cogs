@@ -57,7 +57,7 @@ class Help(object):
     def __call__(self):
         if self.topic is None:
             return self.describe_all()
-        if self.topic in env.task_map:
+        if self.topic in env.task_map and self.topic != '':
             spec = env.task_map[self.topic]
             return self.describe_task(spec)
         elif self.topic in env.setting_map:

@@ -7,9 +7,13 @@
 from .core import Failure, Environment, env, _to_name
 from .log import log, warn, debug, fail
 import sys
-import os, os.path
-import imputil; imputil._os_stat = os.stat
 import types
+import os, os.path
+try:
+    import importlib._bootstrap
+except ImportError:
+    importlib = None
+    import imputil; imputil._os_stat = os.stat
 import pkg_resources
 import yaml
 
@@ -61,8 +65,13 @@ def run(argv):
                 if is_package:
                     local.__package__ = env.shell.local_package
                     local.__path__ = [local_prefix]
-                code = imputil.py_suffix_importer(local_module,
-                        os.stat(local_module), env.shell.local_package)[1]
+                if importlib is not None:
+                    loader = importlib._bootstrap.SourceFileLoader(
+                            env.shell.local_package, local_module)
+                    code = loader.get_code()
+                else:
+                    code = imputil.py_suffix_importer(local_module,
+                            os.stat(local_module), env.shell.local_package)[1]
                 exec code in local.__dict__
 
     # Initialize settings.
@@ -142,7 +151,7 @@ def run(argv):
                 settings[name] = value
             else:
                 if task is None:
-                    task = env.task_map[None]
+                    task = env.task_map['']
                 if name not in task.opt_by_name:
                     raise fail("unknown option or setting {}", key)
                 opt = task.opt_by_name[name]
@@ -166,7 +175,7 @@ def run(argv):
                     attrs[opt.attr].append(value)
         elif param.startswith('-') and param != '-' and not no_more_opts:
             if task is None:
-                task = env.task_map[None]
+                task = env.task_map['']
             keys = param[1:]
             while keys:
                 key = keys[0]
@@ -194,7 +203,7 @@ def run(argv):
                     attrs[opt.attr] += (value,)
         elif task is None:
             if param == '-' and not no_more_opts:
-                task = env.task_map[None]
+                task = env.task_map['']
             else:
                 name = _to_name(param)
                 if name not in env.task_map:
@@ -218,7 +227,7 @@ def run(argv):
             else:
                 attrs[arg.attr] = param
     if task is None:
-        task = env.task_map[None]
+        task = env.task_map['']
     for opt in task.opts:
         if opt.attr in attrs:
             if opt.check is not None:

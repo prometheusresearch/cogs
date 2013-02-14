@@ -21,7 +21,7 @@ CLASSIFIERS = [
     "Intended Audience :: System Administrators",
     "License :: OSI Approved :: MIT License",
     "Operating System :: POSIX :: Linux",
-    "Programming Language :: Python :: 2 :: Only",
+    "Programming Language :: Python",
     "Topic :: Utilities",
 ]
 PACKAGES = find_packages('src')
@@ -33,6 +33,7 @@ ENTRY_POINTS = {
     ],
     'cogs.extensions': [],
 }
+USE_2TO3 = True
 
 
 setup(name=NAME,
@@ -44,6 +45,7 @@ setup(name=NAME,
       packages=PACKAGES,
       package_dir=PACKAGE_DIR,
       install_requires=INSTALL_REQUIRES,
-      entry_points=ENTRY_POINTS)
+      entry_points=ENTRY_POINTS,
+      use_2to3=USE_2TO3)
 
 
