@@ -15,13 +15,15 @@ AUTHOR = """Kirill Simonov (Prometheus Research, LLC)"""
 AUTHOR_EMAIL = "xi@resolvent.net"
 LICENSE = "MIT"
 CLASSIFIERS = [
-    "Development Status :: 2 - Pre-Alpha",
+    "Development Status :: 3 - Alpha",
     "Environment :: Console",
     "Intended Audience :: Developers",
     "Intended Audience :: System Administrators",
     "License :: OSI Approved :: MIT License",
     "Operating System :: POSIX :: Linux",
     "Programming Language :: Python",
+    "Programming Language :: Python :: 2",
+    "Programming Language :: Python :: 3",
     "Topic :: Utilities",
 ]
 PACKAGES = find_packages('src')
