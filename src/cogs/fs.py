@@ -4,6 +4,7 @@
 #
 
 
+from .core import env
 from .log import debug, fail
 import sys
 import os
@@ -42,63 +43,68 @@ def mktree(path):
         os.makedirs(path)
 
 
-def exe(cmd):
+def exe(cmd, cd=None, environ=None):
     """Execute the command replacing the current process."""
-    debug("exe {}", cmd)
+    debug("{}", cmd)
     line = cmd.split()
+    if environ:
+        overrides = environ
+        environ = os.environ.copy()
+        environ.update(overrides)
+    if cd:
+        os.chdir(cd)
     try:
-        os.execvp(line[0], line)
+        if environ:
+            os.execvpe(line[0], line, environ)
+        else:
+            os.execvp(line[0], line)
     except OSError, exc:
         raise fail(str(exc))
 
 
-def sh(cmd, data=None, cd=None):
+def sh(cmd, data=None, cd=None, environ=None):
     """Execute a command using shell."""
     if cd is None:
-        debug("sh {}", cmd)
+        debug("{}", cmd)
     else:
-        debug("cd {}; sh {}", cd, cmd)
+        debug("cd {}; {}", cd, cmd)
     stream = subprocess.PIPE
     if env.debug:
         stream = None
-    if cd is not None:
-        cwd = os.getcwd()
-        os.chdir(cd)
-    try:
-        proc = subprocess.Popen(cmd, shell=True, stdin=stream,
-                                stdout=stream, stderr=stream)
-        proc.communicate(data)
-    finally:
-        if cd is not None:
-            os.chdir(cwd)
+    if environ:
+        overrides = environ
+        environ = os.environ.copy()
+        environ.update(overrides)
+    proc = subprocess.Popen(cmd, shell=True, stdin=stream,
+                            stdout=stream, stderr=stream,
+                            cwd=cd, env=environ)
+    proc.communicate(data)
     if proc.returncode != 0:
-        raise fail("sh `{}`: non-zero exit code", cmd)
+        raise fail("`{}`: non-zero exit code", cmd)
 
 
-def pipe(cmd, data=None, cd=None):
+def pipe(cmd, data=None, cd=None, environ=None):
     """Execute the command, return the output."""
     if cd is None:
-        debug("pipe {}", cmd)
+        debug("| {}", cmd)
     else:
-        debug("cd {}; pipe {}", cd, cmd)
+        debug("$ cd {}; | {}", cd, cmd)
     stream = subprocess.PIPE
-    if cd is not None:
-        cwd = os.getcwd()
-        os.chdir(cd)
-    try:
-        proc = subprocess.Popen(cmd, shell=True,
-                                stdout=stream, stderr=stream)
-        out, err = proc.communicate(data)
-    finally:
-        if cd is not None:
-            os.chdir(cwd)
+    if environ:
+        overrides = environ
+        environ = os.environ.copy()
+        environ.update(overrides)
+    proc = subprocess.Popen(cmd, shell=True,
+                            stdout=stream, stderr=stream,
+                            cwd=cd, env=environ)
+    out, err = proc.communicate(data)
     if proc.returncode != 0:
         if env.debug:
             if out:
                 sys.stdout.write(out)
             if err:
                 sys.stderr.write(err)
-        raise fail("pipe `{}`: non-zero exit code", cmd)
+        raise fail("`{}`: non-zero exit code", cmd)
     return out
 
 

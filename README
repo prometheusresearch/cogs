@@ -524,13 +524,19 @@ File and system utilities.
 ``rmtree(path)``
     Remove a directory tree.
 
-``exe(cmd)``
+``exe(cmd, cd=None, environ=None)``
     Replace the current process with the given shell command.
 
-``sh(cmd, data=None, cd=None)``
+    If ``cd`` is given, changes the directory to the specified
+    path before executing the command.
+
+    If ``environ`` is given, adds the given parameters to the
+    environment before executing the command.
+
+``sh(cmd, data=None, cd=None, environ=None)``
     Execute a shell command with the given input and working directory.
 
-``pipe(cmd, data=None, cd=None)``
+``pipe(cmd, data=None, cd=None, environ=None)``
     Execute a shell command with the given input and working directory;
     return the command output.
 

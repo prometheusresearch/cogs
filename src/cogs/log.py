@@ -83,7 +83,7 @@ def log(msg="", *args, **kwds):
 def debug(msg, *args, **kwds):
     """Display a debug message."""
     if env.debug:
-        _out(":debug:`...` "+msg+"\n", sys.stderr, args, kwds)
+        _out(":debug:`#` "+msg+"\n", sys.stderr, args, kwds)
 
 
 def warn(msg, *args, **kwds):
