@@ -1,0 +1,70 @@
+title: Regression tests for Cogs
+tests:
+
+- title: Hello World
+  tests:
+  - sh: cogs hello world
+    cd: &cd1 demo/01-hello
+  - sh: cogs hello
+    ignore: &ignore-hello |
+      Hello, (.*)!
+    cd: *cd1
+  - sh: cogs help hello
+    cd: *cd1
+
+- title: Extending Cogs
+  tests:
+  - sh: pip install -q -e .
+    cd: &cd2 demo/02-hello-extension
+  - sh: cogs hello world
+    cd: *cd2
+  - sh: cogs hello
+    ignore: *ignore-hello
+    cd: *cd2
+  - sh: cogs help hello
+    cd: *cd2
+  - sh: pip uninstall -q -y Cogs-Hello
+    cd: *cd2
+
+- title: Factorial & Fibonacci
+  tests:
+  - sh: cogs factorial 10
+    cd: &cd3 demo/03-factorial-fibonacci
+  - sh: cogs fibonacci 10
+    cd: *cd3
+  - sh: cogs help
+    cd: *cd3
+  - sh: cogs help factorial
+    cd: *cd3
+  - sh: cogs help fibonacci
+    cd: *cd3
+  - sh: cogs factorial ten
+    exit: 1
+    cd: *cd3
+  - sh: cogs factorial -- -10
+    exit: 1
+    cd: *cd3
+  - sh: cogs fibonacci ten
+    exit: 1
+    cd: *cd3
+  - sh: cogs fibonacci -- -10
+    exit: 1
+    cd: *cd3
+
+- title: Options
+  tests:
+  - sh: cogs write-hello
+    ignore: *ignore-hello
+    cd: &cd4 demo/04-write-hello
+  - sh: cogs write-hello -o ../../test/hello.txt
+    cd: *cd4
+  - read: test/hello.txt
+    ignore: *ignore-hello
+  - rm: test/hello.txt
+  - sh: cogs write-hello --output=../../test/hello.txt world
+    cd: *cd4
+  - read: test/hello.txt
+  - rm: test/hello.txt
+  - sh: cogs help write-hello
+    cd: *cd4
+

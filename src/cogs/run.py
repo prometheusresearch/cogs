@@ -5,7 +5,7 @@
 
 
 from .core import Failure, Environment, env, _to_name
-from .log import log, warn, debug, fail
+from .log import warn, debug, fail
 import sys
 import types
 import os, os.path
@@ -36,7 +36,7 @@ env.add(shell=Environment(name="Cogs",
 def run(argv):
 
     # Load standard tasks and settings.
-    from . import std
+    __import__('cogs.std')
 
     # Load extensions registered using the entry point.
     if env.shell.entry_point:

@@ -1,0 +1,119 @@
+suite: regression-tests-for-cogs
+tests:
+- suite: hello-world
+  tests:
+  - sh: cogs hello world
+    stdout: |
+      Hello, World!
+  - sh: cogs hello
+    stdout: |
+      Hello, Xi!
+  - sh: cogs help hello
+    stdout: |+
+      HELLO - greet someone (if not specified, the current user)
+      Usage: cogs hello [<name>]
+
+- suite: extending-cogs
+  tests:
+  - sh: pip install -q -e .
+    stdout: ''
+  - sh: cogs hello world
+    stdout: |
+      Hello, World!
+  - sh: cogs hello
+    stdout: |
+      Hello, Xi!
+  - sh: cogs help hello
+    stdout: |+
+      HELLO - greet someone (if not specified, the current user)
+      Usage: cogs hello [<name>]
+
+  - sh: pip uninstall -q -y Cogs-Hello
+    stdout: ''
+- suite: factorial-fibonacci
+  tests:
+  - sh: cogs factorial 10
+    stdout: |
+      10! = 3628800
+  - sh: cogs fibonacci 10
+    stdout: |
+      F_10 = 55
+  - sh: cogs help
+    stdout: |+
+      Cogs - A task dispatching utility
+      Usage: cogs [<settings>...] <task> [<arguments>...]
+
+      Run cogs help for general usage and a list of tasks,
+      settings and other help topics.
+
+      Run cogs help <topic> for help on a specific topic.
+
+      Available tasks:
+        factorial <n>            : calculate n!
+        fibonacci <n>            : calculate the n-th Fibonacci number
+        help [<topic>]           : display help on tasks and settings
+
+      Settings:
+        --debug                  : print debug information
+
+  - sh: cogs help factorial
+    stdout: |+
+      FACTORIAL - calculate n!
+      Usage: cogs factorial <n>
+
+      This task calculates the value of the factorial of the given
+      positive number n.  Factorial of n, also known as n!, is
+      defined by the formula:
+
+          n! = 1*2*...*(n-1)*n
+
+  - sh: cogs help fibonacci
+    stdout: |+
+      FIBONACCI - calculate the n-th Fibonacci number
+      Usage: cogs fibonacci <n>
+
+      The n-th Fibonacci number F_n is defined by:
+
+          F_0 = 0
+          F_1 = 1
+          F_n = F_{n-1}+F_{n-2} (n>1)
+
+  - sh: cogs factorial ten
+    stdout: |+
+      FATAL ERROR: n must be an integer
+
+  - sh: cogs factorial -- -10
+    stdout: |+
+      FATAL ERROR: n must be positive
+
+  - sh: cogs fibonacci ten
+    stdout: |+
+      FATAL ERROR: invalid value for argument <n>: invalid literal for int() with base 10: 'ten'
+
+  - sh: cogs fibonacci -- -10
+    stdout: |+
+      FATAL ERROR: n must be non-negative
+
+- suite: options
+  tests:
+  - sh: cogs write-hello
+    stdout: |
+      Hello, Xi!
+  - sh: cogs write-hello -o ../../test/hello.txt
+    stdout: ''
+  - read: test/hello.txt
+    data: |
+      Hello, Xi!
+  - sh: cogs write-hello --output=../../test/hello.txt world
+    stdout: ''
+  - read: test/hello.txt
+    data: |
+      Hello, World!
+  - sh: cogs help write-hello
+    stdout: |+
+      WRITE-HELLO
+      Usage: cogs write-hello [<name>]
+
+      Options:
+        output
+
