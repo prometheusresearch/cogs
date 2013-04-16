@@ -46,7 +46,8 @@ def mktree(path):
 def exe(cmd, cd=None, environ=None):
     """Execute the command replacing the current process."""
     debug("{}", cmd)
-    line = cmd.split()
+    if isinstance(cmd, str):
+        cmd = cmd.split()
     if environ:
         overrides = environ
         environ = os.environ.copy()
@@ -55,9 +56,9 @@ def exe(cmd, cd=None, environ=None):
         os.chdir(cd)
     try:
         if environ:
-            os.execvpe(line[0], line, environ)
+            os.execvpe(cmd[0], cmd, environ)
         else:
-            os.execvp(line[0], line)
+            os.execvp(cmd[0], cmd)
     except OSError, exc:
         raise fail(str(exc))
 

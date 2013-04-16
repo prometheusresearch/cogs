@@ -160,9 +160,9 @@ class Help(object):
                 if opt.has_value:
                     usage = "%s=%s" % (usage, opt.value_name)
                 if spec.hint:
-                    log("  {:<24} : {}", usage, spec.hint)
+                    log("  {:<24} : {}", usage, opt.hint)
                 else:
-                    log("  {}", spec.name)
+                    log("  {}", opt.name)
             log()
 
     def describe_setting(self, spec):
