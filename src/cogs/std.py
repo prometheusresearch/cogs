@@ -126,7 +126,7 @@ class Help(object):
                     log("  {:<24} : {}", spec.name, spec.hint)
                 else:
                     log("  {}", spec.name)
-                log()
+            log()
 
     def describe_task(self, spec):
         if spec.hint:
@@ -192,11 +192,6 @@ class Help(object):
             log()
 
     def describe_topic(self, spec):
-        if spec.hint:
-            log("{} - {}", spec.name.upper(), spec.hint)
-        else:
-            log("{}", spec.name.upper())
-        log()
         if spec.help:
             log(spec.help)
             log()
