@@ -9,13 +9,26 @@ from .log import debug, fail
 import sys
 import os
 import shutil
+import shlex
 import subprocess
 
 
 def cp(src_path, dst_path):
     """Copy a file or a directory."""
     debug("cp {} {}", src_path, dst_path)
-    shutil.copy(src_path, dst_path)
+    if os.path.isfile(src_path):
+        shutil.copy2(src_path, dst_path)
+    elif os.path.islink(src_path):
+        link = os.readlink(src_path)
+        os.symlink(link, dst_path)
+    else:
+        if os.path.exists(dst_path):
+            dst_path = os.path.join(dst_path, os.path.basename(src_path))
+        os.mkdir(dst_path)
+        for filename in os.listdir(src_path):
+            with env(debug=False):
+                cp(os.path.join(src_path, filename),
+                   os.path.join(dst_path, filename))
 
 
 def mv(src_path, dst_path):
@@ -47,7 +60,7 @@ def exe(cmd, cd=None, environ=None):
     """Execute the command replacing the current process."""
     debug("{}", cmd)
     if isinstance(cmd, str):
-        cmd = cmd.split()
+        cmd = shlex.split(cmd)
     if environ:
         overrides = environ
         environ = os.environ.copy()
