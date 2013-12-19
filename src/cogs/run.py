@@ -8,14 +8,21 @@ from .core import Failure, Environment, env, _to_name
 from .log import warn, debug, fail
 import sys
 import types
-import os, os.path
+import os.path
 try:
     import importlib._bootstrap
 except ImportError:
     importlib = None
-    import imputil; imputil._os_stat = os.stat
+    import imputil
+    imputil._os_stat = os.stat
 import pkg_resources
 import yaml
+
+
+__all__ = (
+    'run',
+    'main',
+)
 
 
 env.add(shell=Environment(name="Cogs",
@@ -33,94 +40,142 @@ env.add(shell=Environment(name="Cogs",
         topic_map={})
 
 
-def run(argv):
-
-    # Load standard tasks and settings.
+def load_standard_extensions():
     __import__('cogs.std')
+
+
+def load_entry_point_extensions(entry_point):
+    for entry in pkg_resources.iter_entry_points(entry_point):
+        debug("loading extensions from {}", entry)
+        entry.load()
+
+
+def load_local_extensions(local_package):
+    local_prefix = os.path.join(os.getcwd(), local_package)
+    local_module = None
+    for path, is_package in [(local_prefix+'.py', False),
+                             (local_prefix+'/__init__.py', True)]:
+        if os.path.exists(path):
+            local_module = path
+            break
+    if local_module is not None:
+        uid = os.stat(local_module).st_uid
+        if not (uid == os.getuid() or uid == 0):
+            warn("cannot load extensions from {}:"
+                 " not owned by the user or the root", local_module)
+        else:
+            debug("loading extensions from {}", local_module)
+            local = types.ModuleType(local_package)
+            sys.modules[local_package] = local
+            if is_package:
+                local.__package__ = local_package
+                local.__path__ = [local_prefix]
+            if importlib is not None:
+                loader = importlib._bootstrap.SourceFileLoader(
+                    local_package,
+                    local_module,
+                )
+                code = loader.get_code()
+            else:
+                code = imputil.py_suffix_importer(
+                    local_module,
+                    os.stat(local_module),
+                    local_package,
+                )[1]
+            exec code in local.__dict__
+
+
+def load_all_extensions():
+    # Load standard tasks and settings.
+    load_standard_extensions()
 
     # Load extensions registered using the entry point.
     if env.shell.entry_point:
-        for entry in pkg_resources.iter_entry_points(env.shell.entry_point):
-            debug("loading extensions from {}", entry)
-            entry.load()
+        load_entry_point_extensions(env.shell.entry_point)
 
     # Load extensions from the current directory.
     if env.shell.local_package:
-        local_prefix = os.path.join(os.getcwd(), env.shell.local_package)
-        local_module = None
-        for path, is_package in [(local_prefix+'.py', False),
-                                 (local_prefix+'/__init__.py', True)]:
-            if os.path.exists(path):
-                local_module = path
-                break
-        if local_module is not None:
-            uid = os.stat(local_module).st_uid
-            if not (uid == os.getuid() or uid == 0):
-                warn("cannot load extensions from {}:"
-                     " not owned by the user or the root", local_module)
-            else:
-                debug("loading extensions from {}", local_module)
-                local = types.ModuleType(env.shell.local_package)
-                sys.modules[env.shell.local_package] = local
-                if is_package:
-                    local.__package__ = env.shell.local_package
-                    local.__path__ = [local_prefix]
-                if importlib is not None:
-                    loader = importlib._bootstrap.SourceFileLoader(
-                            env.shell.local_package, local_module)
-                    code = loader.get_code()
-                else:
-                    code = imputil.py_suffix_importer(local_module,
-                            os.stat(local_module), env.shell.local_package)[1]
-                exec code in local.__dict__
+        load_local_extensions(env.shell.local_package)
 
-    # Initialize settings.
+
+def get_settings_from_environment():
     settings = {}
-
-    # Load settings from configuration files.
-    if env.shell.config_name and env.shell.config_dirs:
-        for config_dir in env.shell.config_dirs:
-            config_path = os.path.join(config_dir, env.shell.config_name)
-            if not os.path.isfile(config_path):
-                continue
-            debug("loading configuration from {}", config_path)
-            try:
-                data = yaml.load(open(config_path, 'r'))
-            except yaml.YAMLError, exc:
-                warn("failed to load configuration from {}: {}",
-                     config_path, exc)
-                continue
-            if data is None:
-                continue
-            if not isinstance(data, dict):
-                warn("ill-formed configuration file {}", config_path)
-                continue
-            for key in sorted(data):
-                if not isinstance(key, str):
-                    warn("invalid setting {!r}"
-                         " in configuration file {}", key, config_path)
-                    continue
-                name = _to_name(key)
-                if name not in env.setting_map:
-                    warn("unknown setting {} in configuration file {}",
-                         key, config_path)
-                    continue
-                settings[name] = data[key]
-
-    # Load settings from environment variables.
     prefix = "%s_" % env.shell.name.upper().replace('-', '_')
+
     for key in sorted(os.environ):
         if not key.startswith(prefix):
             continue
+
         name = _to_name(key[len(prefix):])
         if name not in env.setting_map:
             warn("unknown setting {} in the environment", key)
             continue
+
         settings[name] = os.environ[key]
 
-    # Parse command-line parameters.
+    return settings
+
+
+def extract_settings_from_file(config_path):
+    settings = {}
+
+    debug("loading configuration from {}", config_path)
+    try:
+        data = yaml.load(open(config_path, 'r'))
+    except yaml.YAMLError, exc:
+        warn("failed to load configuration from {}: {}",
+             config_path, exc)
+        return settings
+
+    if data is None:
+        return settings
+
+    if not isinstance(data, dict):
+        warn("ill-formed configuration file {}", config_path)
+        return settings
+
+    for key in sorted(data):
+        if not isinstance(key, str):
+            warn("invalid setting {!r}"
+                 " in configuration file {}", key, config_path)
+            continue
+
+        name = _to_name(key)
+        if name not in env.setting_map:
+            warn("unknown setting {} in configuration file {}",
+                 key, config_path)
+            continue
+
+        settings[name] = data[key]
+
+    return settings
+
+
+def get_settings_from_config(config_file=None):
+    settings = {}
+
+    if env.shell.config_name and env.shell.config_dirs:
+        for config_dir in env.shell.config_dirs:
+            config_path = os.path.join(config_dir, env.shell.config_name)
+            if os.path.isfile(config_path):
+                settings.update(extract_settings_from_file(config_path))
+
+    if config_file:
+        if not os.path.isfile(config_file):
+            raise fail(
+                'specified configuration file {} does not exist',
+                config_file,
+            )
+        settings.update(extract_settings_from_file(config_file))
+
+    return settings
+
+
+def parse_command_line(argv):
     task = None
     attrs = {}
+    settings = {}
+
     no_more_opts = False
     params = argv[1:]
     while params:
@@ -226,8 +281,10 @@ def run(argv):
                 attrs[arg.attr] += (param,)
             else:
                 attrs[arg.attr] = param
+
     if task is None:
         task = env.task_map['']
+
     for opt in task.opts:
         if opt.attr in attrs:
             if opt.check is not None:
@@ -242,6 +299,7 @@ def run(argv):
                                opt.name, exc)
         else:
             attrs[opt.attr] = opt.default
+
     for arg in task.args:
         if arg.attr in attrs:
             if arg.check is not None:
@@ -258,6 +316,30 @@ def run(argv):
             if not arg.is_optional:
                 raise fail("missing argument <{}>", arg.name)
             attrs[arg.attr] = arg.default
+
+    return task, attrs, settings
+
+
+def run(argv):
+    # Load all the extensions.
+    load_all_extensions()
+
+    # Parse command-line parameters.
+    task, attrs, commandline_settings = parse_command_line(argv)
+
+    # Load settings from configuration files.
+    config_settings = get_settings_from_config(
+        commandline_settings.pop('config', None)
+    )
+
+    # Load settings from environment variables.
+    environment_settings = get_settings_from_environment()
+
+    # Merge all the settings we've collected.
+    settings = {}
+    settings.update(config_settings)
+    settings.update(environment_settings)
+    settings.update(commandline_settings)
 
     # Initialize settings.
     for name in sorted(env.setting_map):
@@ -291,5 +373,4 @@ def main():
             if env.debug:
                 raise
             return exc
-
 
