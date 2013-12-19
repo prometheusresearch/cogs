@@ -210,3 +210,8 @@ def Debug(value=False):
     env.set(debug=value)
 
 
+@setting
+def config(config_file=None):
+    """specify a config file to retrieve settings from"""
+    env.config = config_file
+
