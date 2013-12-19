@@ -319,6 +319,12 @@ Cogs reads configuration from the following locations:
 * program environment
 * command-line parameters
 
+If you'd like to specify the usage of a configuration file that is in a
+different location than the standard locations listed above, you can use
+the global option ``--config`` as follows::
+
+    $ cogs --config=alternate-cogs.conf hello-with-configuration
+
 To create a new configuration parameter, wrap a function named after the
 parameter with the ``@setting`` decorator.  The function must accept
 zero or one argument: the function is called without arguments if the
