@@ -124,15 +124,27 @@ tests:
 
 - suite: configuration
   tests:
+  - sh: cogs hello-with-configuration
+    stdout: |
+      Hello, Robert!
   - sh: cogs hello-with-configuration Billy
     stdout: |
       Hello, Billy!
   - sh: cogs hello-with-configuration
     stdout: |
-      Hello, Robert!
+      Hello, Sam!
+  - sh: cogs hello-with-configuration Billy
+    stdout: |
+      Hello, Billy!
   - sh: cogs hello-with-configuration --config=alternate-cogs.conf
     stdout: |
       Hello, Bob!
-  - sh: cogs hello-with-configuration
+  - sh: cogs hello-with-configuration Billy --config=alternate-cogs.conf
+    stdout: |
+      Hello, Billy!
+  - sh: cogs hello-with-configuration --config=alternate-cogs.conf
     stdout: |
       Hello, Sam!
+  - sh: cogs hello-with-configuration Billy --config=alternate-cogs.conf
+    stdout: |
+      Hello, Billy!
