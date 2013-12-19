@@ -68,3 +68,16 @@ tests:
   - sh: cogs help write-hello
     cd: *cd4
 
+- title: Configuration
+  tests:
+  - sh: cogs hello-with-configuration Billy
+    cd: &cd5 demo/05-hello-with-configuration
+  - sh: cogs hello-with-configuration
+    cd: *cd5
+  - sh: cogs hello-with-configuration --config=alternate-cogs.conf
+    cd: *cd5
+  - sh: cogs hello-with-configuration
+    environ:
+      COGS_DEFAULT_NAME: Sam
+    cd: *cd5
+
