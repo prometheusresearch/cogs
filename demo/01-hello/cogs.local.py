@@ -6,6 +6,9 @@ import os
 def Hello(name=None):
     """greet someone (if not specified, the current user)"""
     if name is None:
-        name = os.getlogin()
+        # `os.getlogin()` does not work when the script is not started
+        # by a login shell.
+        # name = os.getlogin()
+        name = os.environ['USER']
     print "Hello, %s!" % name.capitalize()
 

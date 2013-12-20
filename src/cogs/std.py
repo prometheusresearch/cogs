@@ -11,7 +11,7 @@ import os.path
 
 
 @default_task
-class Usage(object):
+class USAGE(object):
     """run when no task is supplied"""
 
     help = option()
@@ -23,7 +23,7 @@ class Usage(object):
 
     def __call__(self):
         if self.help:
-            t = Help(None)
+            t = HELP(None)
             return t()
         if env.shell.description:
             log("{} - {}", env.shell.name, env.shell.description)
@@ -39,7 +39,7 @@ class Usage(object):
 
 
 @task
-class Help(object):
+class HELP(object):
     """display help on tasks and settings
 
     When started without arguments, displays a list of available tasks,
@@ -199,7 +199,7 @@ class Help(object):
 
 
 @setting
-def Debug(value=False):
+def DEBUG(value=False):
     """print debug information"""
     if value is None or value in ['false', '', '0', 0]:
         value = False
@@ -211,7 +211,10 @@ def Debug(value=False):
 
 
 @setting
-def config(config_file=None):
-    """specify a config file to retrieve settings from"""
-    env.config = config_file
+def CONFIG(config_file=None):
+    """config file to retrieve settings from"""
+    if not (config_file is None or isinstance(config_file, str)):
+        raise ValueError("config: expected a path; got %r" % config_file)
+    env.set(config_file=config_file)
+
 

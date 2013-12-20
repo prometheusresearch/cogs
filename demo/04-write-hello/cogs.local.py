@@ -10,7 +10,7 @@ class Write_Hello:
 
     def __init__(self, name, output):
         if name is None:
-            name = os.getlogin()
+            name = os.environ['USER']
         self.name = name
         if output is None:
             self.file = sys.stdout

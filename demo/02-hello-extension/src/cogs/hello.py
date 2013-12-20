@@ -6,6 +6,6 @@ import os
 def Hello(name=None):
     """greet someone (if not specified, the current user)"""
     if name is None:
-        name = os.getlogin()
+        name = os.environ['USER']
     print "Hello, %s!" % name.capitalize()
 
