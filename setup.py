@@ -8,7 +8,7 @@ from setuptools import setup, find_packages
 
 
 NAME = "Cogs"
-VERSION = "0.2.3"
+VERSION = "0.3.0"
 DESCRIPTION = """Toolkit for developing command-line utilities in Python"""
 LONG_DESCRIPTION = open('README', 'r').read()
 AUTHOR = """Kirill Simonov (Prometheus Research, LLC)"""
