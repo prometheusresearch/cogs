@@ -113,6 +113,8 @@ def _parse_argv(argv):
     no_more_opts = False
     # Parameters to process.
     params = argv[1:]
+    # Parameters containing task arguments.
+    arg_params = []
     while params:
         param = params.pop(0)
 
@@ -216,24 +218,51 @@ def _parse_argv(argv):
         else:
             if param == '-' and not no_more_opts:
                 param = None
-            for arg in task.args:
-                if arg.attr not in attrs or arg.is_plural:
-                    break
-            else:
-                if task.name:
-                    raise fail("too many arguments for task {}", task.name)
-                else:
-                    raise fail("too many arguments")
-            if arg.is_plural:
-                if arg.attr not in attrs:
-                    attrs[arg.attr] = ()
-                attrs[arg.attr] += (param,)
-            else:
-                attrs[arg.attr] = param
+            arg_params.append(param)
 
     # It is the default task.
     if task is None:
         task = env.task_map['']
+
+    # Verify the number of arguments.
+    min_args = max_args = 0
+    for arg in task.args:
+        if max_args is not None:
+            max_args += 1
+        if not arg.is_optional:
+            min_args += 1
+        if arg.is_plural:
+            max_args = None
+    if max_args is not None and len(arg_params) > max_args:
+        if task.name:
+            raise fail("too many arguments for task {}", task.name)
+        else:
+            raise fail("too many arguments")
+    if len(arg_params) < min_args:
+        missing = []
+        for arg in task.args:
+            if not arg.is_optional:
+                if arg_params:
+                    arg_params.pop(0)
+                else:
+                    missing.append(arg.name)
+        missing = " ".join("<%s>" % name for name in missing)
+        if task.name:
+            raise fail("too few arguments for task {}: missing {}",
+                       task.name, missing)
+        else:
+            raise fail("too few arguments: missing {}", missing)
+
+    # Extract arguments into attributes.
+    for pos, arg in reversed(list(enumerate(task.args))):
+        if arg.is_optional and pos >= len(arg_params):
+            continue
+        if arg.is_plural:
+            attrs[arg.attr] = ()
+            while pos < len(arg_params):
+                attrs[arg.attr] = (arg_params.pop(),)+attrs[arg.attr]
+        else:
+            attrs[arg.attr] = arg_params.pop()
 
     # Validate options.
     for opt in task.opts:
@@ -265,8 +294,6 @@ def _parse_argv(argv):
                     raise fail("invalid value for argument <{}>: {}",
                                arg.name, exc)
         else:
-            if not arg.is_optional:
-                raise fail("missing argument <{}>", arg.name)
             attrs[arg.attr] = arg.default
 
     return task, attrs

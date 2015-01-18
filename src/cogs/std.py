@@ -89,17 +89,12 @@ class HELP(object):
                     continue
                 spec = env.task_map[name]
                 usage = spec.name
-                optionals = 0
                 for arg in spec.args:
                     if arg.is_optional:
-                        usage = "%s [<%s>" % (usage, arg.name)
-                        optionals += 1
-                    else:
-                        usage = "%s <%s>" % (usage, arg.name)
+                        continue
+                    usage = "%s <%s>" % (usage, arg.name)
                     if arg.is_plural:
                         usage += "..."
-                if optionals:
-                    usage += "]"*optionals
                 if spec.hint:
                     log("  {:<24} : {}", usage, spec.hint)
                 else:
@@ -139,6 +134,10 @@ class HELP(object):
             if arg.is_optional:
                 usage = "%s [<%s>" % (usage, arg.name)
                 optionals += 1
+            elif optionals > 0:
+                usage += "]"*optionals
+                optionals = 0
+                usage = "%s <%s>" % (usage, arg.name)
             else:
                 usage = "%s <%s>" % (usage, arg.name)
             if arg.is_plural:
@@ -192,6 +191,11 @@ class HELP(object):
             log()
 
     def describe_topic(self, spec):
+        if spec.hint:
+            log("{} - {}", spec.name.upper(), spec.hint)
+        else:
+            log("{}", spec.name.upper())
+        log()
         if spec.help:
             log(spec.help)
             log()

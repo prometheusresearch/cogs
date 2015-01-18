@@ -200,12 +200,6 @@ def task(T, is_default=False):
         name = _to_name(attr)
         assert name not in names, \
                 "duplicate argument name: <%s>" % name
-        assert not (dsc.plural and len(args) < len(arg_attrs)-1), \
-                "a plural argument must be the last" \
-                " in the argument list: <%s>" % name
-        assert not (dsc.default is dsc.REQ and args and args[-1].is_optional), \
-                "a mandatory argument must not follow" \
-                " an optional argument: <%s>" % name
         names.add(name)
         check = dsc.check
         default = dsc.default

@@ -67,6 +67,8 @@ def exe(cmd, cd=None, environ=None):
         environ.update(overrides)
     if cd:
         os.chdir(cd)
+    if hasattr(sys, 'exitfunc'):
+        sys.exitfunc()
     try:
         if environ:
             os.execvpe(cmd[0], cmd, environ)
