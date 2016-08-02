@@ -55,7 +55,7 @@ tests:
       Available tasks:
         factorial <n>            : calculate n!
         fibonacci <n>            : calculate the n-th Fibonacci number
-        help [<topic>]           : display help on tasks and settings
+        help                     : display help on tasks and settings
 
       Settings:
         --config=CONFIG_FILE     : config file to retrieve settings from

@@ -51,7 +51,7 @@ def colorize(msg, file=None):
         return msg
     if file is None:
         file = sys.stdout
-    has_colors = (file.isatty() and os.environ.get('COLORTERM'))
+    has_colors = file.isatty()
     def _replace(match):
         style = match.group('style')
         data = match.group('data')
