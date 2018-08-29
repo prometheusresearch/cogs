@@ -94,7 +94,7 @@ def _load_extensions():
                     # Python 3.
                     loader = importlib._bootstrap.SourceFileLoader(
                             package, module)
-                    code = loader.get_code()
+                    code = loader.get_code(None)
                 else:
                     # Python 2.
                     code = imputil.py_suffix_importer(
