@@ -92,7 +92,7 @@ def _load_extensions():
                     local.__path__ = [prefix]
                 if importlib is not None:
                     # Python 3.
-                    loader = importlib._bootstrap.SourceFileLoader(
+                    loader = importlib.machinery.SourceFileLoader(
                             package, module)
                     code = loader.get_code(None)
                 else:
