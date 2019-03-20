@@ -312,10 +312,16 @@ def _configure_environ():
         _init_setting(name, os.environ[key])
 
 
+try:
+    YAML_LOADER = yaml.FullLoader
+except AttributeError:
+    YAML_LOADER = yaml.Loader
+
+
 def _configure_file(config_path):
     debug("loading configuration from {}", config_path)
     try:
-        data = yaml.load(open(config_path, 'r'))
+        data = yaml.load(open(config_path, 'r'), Loader=YAML_LOADER)
     except yaml.YAMLError, exc:
         warn("failed to load configuration from {}: {}",
              config_path, exc)
