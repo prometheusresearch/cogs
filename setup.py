@@ -14,7 +14,7 @@ LONG_DESCRIPTION = open('README', 'r').read()
 AUTHOR = """Kirill Simonov (Prometheus Research, LLC)"""
 AUTHOR_EMAIL = "xi@resolvent.net"
 LICENSE = "MIT"
-URL = "http://bitbucket.org/prometheus/cogs"
+URL = "https://github.com/prometheusresearch/cogs"
 DOWNLOAD_URL = "http://pypi.python.org/pypi/Cogs"
 CLASSIFIERS = [
     "Development Status :: 3 - Alpha",
